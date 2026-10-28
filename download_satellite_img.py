@@ -1,8 +1,9 @@
-import math
+from datetime import datetime
 from io import BytesIO
-import requests
+import math
 from geopy.geocoders import Nominatim
 from PIL import Image
+import requests
 
 
 def get_coordinates(place_name):
@@ -44,9 +45,9 @@ def latlon_to_tile(lat, lon, zoom):
 
 
 def download_satellite_image(
-    place_name, zoom=14, grid_size=6, output_filename="input_image.jpg"
+    place_name, zoom=14, grid_size=6, output_filename="input_image.jpg", pil_format="JPEG"
 ):
-    """Downloads satellite imagery tiles for any user-entered location and stitches them into a single JPG."""
+    """Downloads satellite imagery tiles for any user-entered location and stitches them into the selected format."""
     # 1. Geocode location from user input
     lat, lon = get_coordinates(place_name)
 
@@ -57,7 +58,7 @@ def download_satellite_image(
     tile_pixels = 256
     half_grid = grid_size // 2
 
-    # Canvas dimensions = grid_size * 256 pixels (e.g., 6 x 256 = 1536x1536 px)
+    # Canvas dimensions = grid_size * 256 pixels
     stitched_image = Image.new(
         "RGB", (grid_size * tile_pixels, grid_size * tile_pixels)
     )
@@ -80,8 +81,14 @@ def download_satellite_image(
                     tile_img, (i * tile_pixels, j * tile_pixels)
                 )
 
-    # Save as 8-bit JPG for OpenCV processing
-    stitched_image.save(output_filename, "JPEG", quality=95)
+    # Save format-specific configurations
+    save_kwargs = {}
+    if pil_format == "JPEG":
+        save_kwargs["quality"] = 95
+    elif pil_format == "TIFF":
+        save_kwargs["compression"] = "tiff_lzw"  # Optional compression for GIS TIFFs
+
+    stitched_image.save(output_filename, pil_format, **save_kwargs)
     print(f"\nSuccess! Image saved as '{output_filename}'")
     print(f"Final Resolution: {stitched_image.width}x{stitched_image.height} pixels")
 
@@ -110,14 +117,15 @@ if __name__ == "__main__":
     # Preset configurations
     if choice == "1":
         selected_zoom = 16
-        selected_grid = 6  # 1536 x 1536 pixels
+        selected_grid = 6
     elif choice == "3":
         selected_zoom = 12
-        selected_grid = 6  # 1536 x 1536 pixels
+        selected_grid = 6
     else:
         selected_zoom = 14
-        selected_grid = 6  # 1536 x 1536 pixels (Default)
-    # After zoom choice, add:
+        selected_grid = 6
+
+    # 3. Output Format Choice
     print("\nSelect Output Format:")
     print("  [1] JPEG (smaller file, default)")
     print("  [2] PNG  (lossless)")
@@ -127,23 +135,21 @@ if __name__ == "__main__":
 
     format_map = {
         "1": ("JPEG", "jpg"),
-        "2": ("PNG",  "png"),
+        "2": ("PNG", "png"),
         "3": ("TIFF", "tif"),
     }
     pil_format, extension = format_map.get(fmt_choice, ("JPEG", "jpg"))
 
-    # Pass to download function:
-    output_file = f"input_image.{extension}"
+    # Generate dynamic filename using timestamp and safe place name
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    safe_name = place.lower().replace(" ", "_")
+    output_file = f"{safe_name}_{timestamp}.{extension}"
+
+    # Pass everything cleanly to the download function
     download_satellite_image(
         place_name=place,
         zoom=selected_zoom,
         grid_size=selected_grid,
         output_filename=output_file,
-        pil_format=pil_format
+        pil_format=pil_format,
     )
-
-    # In download_satellite_image(), change the save line:
-    stitched_image.save(output_filename, pil_format, 
-                    quality=95 if pil_format == "JPEG" else None)
-
-    
