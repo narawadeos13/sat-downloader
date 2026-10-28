@@ -2,7 +2,7 @@
 
 **Type a place name. Get a stitched satellite image. No API key.**
 
-SatGrab converts any location — a dam, a lake, a village, a mountain — into a high-resolution satellite image ready for OpenCV or Geo AI pipelines. It geocodes the name, works out which map tiles cover it, downloads them, and stitches them into a single JPEG.
+SatGrab converts any location — a dam, a lake, a village, a mountain — into a high-resolution satellite image ready for OpenCV or Geo AI pipelines. It geocodes the name, works out which map tiles cover it, downloads them, and stitches them into a single JPEG/PNG/TIF.
 
 Built as the data-acquisition layer for my Geo AI projects (Raireshwar Plateau, Sahyadri Ecosystem Research) — a reusable way to grab satellite context for any new site without manually hunting through a GIS tool each time.
 
@@ -14,7 +14,7 @@ Built as the data-acquisition layer for my Geo AI projects (Raireshwar Plateau, 
 Place name  →  Geocoded to lat/lon (Nominatim)
             →  Converted to Web Mercator XYZ tile coordinates
             →  6×6 grid of 256×256 tiles downloaded (Esri ArcGIS World Imagery)
-            →  Stitched into one 1536×1536 JPEG
+            →  Stitched into one 1536×1536 JPEG/PNG/TIF
 ```
 
 No registration, no API key — uses Esri's public World Imagery tile endpoint.
@@ -31,18 +31,31 @@ python download_satellite_img.py
 ```
 
 ```
-Enter Place Name: Mulshi Dam
+============================================================
+ SATELLITE RASTER IMAGE DOWNLOADER (GEOSPATIAL CV TOOL)
+============================================================
 
-Match Found: Mulshi Dam, Pune, Maharashtra, India
-Coordinates: Lat 18.5032, Lon 73.5124
+Enter Place Name (e.g., 'Mulshi Dam', 'Khadakwasla', 'Pangong Tso'): mulshi dam
 
 Select Coverage & Resolution Level:
-  [1] High Detail / Local View (Zoom 16, ~1-2 km)
-  [2] Balanced Regional View (Zoom 14, ~5-8 km)
-  [3] Wide Regional View (Zoom 12, ~15-20 km)
+  [1] High Detail / Local View (Zoom 16, ~1-2 km coverage)
+  [2] Balanced Regional / Lake & Mountain View (Zoom 14, ~5-8 km coverage)
+  [3] Wide Regional View (Zoom 12, ~15-20 km coverage)
+Enter choice (1, 2, or 3) [Default: 2]: 2
 
-Fetching 6x6 tiles at Zoom Level 14...
-Success! Image saved as 'input_image.jpg' (1536x1536 px)
+Select Output Format:
+  [1] JPEG (smaller file, default)
+  [2] PNG  (lossless)
+  [3] TIFF (for GIS use)
+Enter choice (1/2/3) [Default: 1]: 3
+
+Match Found: Mulshi Dam, Sambhave, Mulshi Subdistrict, Pune, Maharashtra, 412108, India
+Coordinates: Lat 18.5265, Lon 73.5111
+
+Fetching 6x6 tiles at Zoom Level 14 for wider spatial coverage...
+
+Success! Image saved as 'mulshi_dam_20261028_0952.tif'
+Final Resolution: 1536x1536 pixels
 ```
 
 ---
@@ -111,7 +124,6 @@ satgrab/
 ## Known limitations
 
 - Fixed 6×6 grid / 1536×1536 output — no custom dimensions yet
-- JPEG only — no GeoTIFF, so output isn't georeferenced for direct GIS re-import
 - Single imagery source (Esri World Imagery) — no cloud filtering, no date selection
 - Sequential tile downloads — a 6×6 grid means 36 requests, not parallelized
 
