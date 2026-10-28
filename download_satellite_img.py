@@ -117,11 +117,33 @@ if __name__ == "__main__":
     else:
         selected_zoom = 14
         selected_grid = 6  # 1536 x 1536 pixels (Default)
+    # After zoom choice, add:
+    print("\nSelect Output Format:")
+    print("  [1] JPEG (smaller file, default)")
+    print("  [2] PNG  (lossless)")
+    print("  [3] TIFF (for GIS use)")
 
-    # Run Downloader
+    fmt_choice = input("Enter choice (1/2/3) [Default: 1]: ").strip()
+
+    format_map = {
+        "1": ("JPEG", "jpg"),
+        "2": ("PNG",  "png"),
+        "3": ("TIFF", "tif"),
+    }
+    pil_format, extension = format_map.get(fmt_choice, ("JPEG", "jpg"))
+
+    # Pass to download function:
+    output_file = f"input_image.{extension}"
     download_satellite_image(
         place_name=place,
         zoom=selected_zoom,
         grid_size=selected_grid,
-        output_filename="input_image.jpg",
+        output_filename=output_file,
+        pil_format=pil_format
     )
+
+    # In download_satellite_image(), change the save line:
+    stitched_image.save(output_filename, pil_format, 
+                    quality=95 if pil_format == "JPEG" else None)
+
+    
